@@ -55,23 +55,25 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_localizations:
-    dependency: "direct main"
-    description: flutter
-    source: sdk
-    version: "0.0.0"
+  flutter_lints:
+    dependency: "direct dev"
+    description:
+      name: flutter_lints
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.2"
   flutter_test:
     dependency: "direct dev"
     description: flutter
     source: sdk
     version: "0.0.0"
-  intl:
+  lints:
     dependency: transitive
     description:
-      name: intl
+      name: lints
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.17.0"
+    version: "2.0.1"
   matcher:
     dependency: transitive
     description:
@@ -155,4 +157,4 @@ packages:
     source: hosted
     version: "2.1.2"
 sdks:
-  dart: ">=2.17.0 <3.0.0"
+  dart: ">=2.18.6 <3.0.0"
