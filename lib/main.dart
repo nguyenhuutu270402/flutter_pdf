@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -27,13 +28,24 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _launchPrint() async {
+    final Uri uri = Uri.file(remotePDFpath);
+
+    if (!File(uri.toFilePath()).existsSync()) {
+      throw Exception('$uri does not exist!');
+    }
+    if (!await launchUrl(uri)) {
+      throw Exception('Could not launch $uri');
+    }
+  }
+
   Future<File> createFileOfPdfUrl() async {
     Completer<File> completer = Completer();
     print("Start download file from internet!");
     try {
       // final url = "https://berlin2017.droidcon.cod.newthinking.net/sites/global.droidcon.cod.newthinking.net/files/media/documents/Flutter%20-%2060FPS%20UI%20of%20the%20future%20%20-%20DroidconDE%2017.pdf";
       // final url = "https://pdfkit.org/docs/guide.pdf";
-      final url = "http://www.pdf995.com/samples/pdf.pdf";
+      const url = "http://www.pdf995.com/samples/pdf.pdf";
       final filename = url.substring(url.lastIndexOf("/") + 1);
       var request = await HttpClient().getUrl(Uri.parse(url));
       var response = await request.close();
@@ -73,6 +85,14 @@ class _MyAppState extends State<MyApp> {
                           builder: (context) => PDFScreen(path: remotePDFpath),
                         ),
                       );
+                    }
+                  },
+                ),
+                TextButton(
+                  child: Text("open print"),
+                  onPressed: () {
+                    if (remotePDFpath.isNotEmpty) {
+                      _launchPrint();
                     }
                   },
                 ),
