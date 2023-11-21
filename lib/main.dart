@@ -56,9 +56,10 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> openPdf() async {
     await OpenFile.open(remotePDFpath);
-    await Printing.layoutPdf(
+    var result = await Printing.layoutPdf(
       onLayout: (format) => File(remotePDFpath).readAsBytesSync(),
     );
+    print(">>>>>>>>>>>>>> ${result}");
   }
 
   void sendMail() async {
@@ -66,60 +67,22 @@ class _MyAppState extends State<MyApp> {
       body: 'Email body',
       subject: 'Email subject',
       recipients: ['turulles5@gmail.com'],
-      attachmentPaths: ['$remotePDFpath'],
+      attachmentPaths: [remotePDFpath],
       isHTML: true,
     );
     await FlutterEmailSender.send(email);
   }
 
-  // Future<void> downloadFile(String url, String fileName) async {
-  //   Dio dio = Dio();
-  //   try {
-  //     // Tạo thư mục download nếu chưa tồn tại
-  //     Directory appDocDir = await getApplicationSupportDirectory();
-  //     String downloadPath = appDocDir.path + "/Download";
-  //     await Directory(downloadPath).create(recursive: true);
-  //     // Tạo đường dẫn đầy đủ cho file PDF
-  //     String filePath = '$downloadPath/$fileName';
-  //     // Tải file từ URL
-  //     await dio.download(url, filePath);
-  //     File file = File(filePath);
-  //     developer.log('File đã được tải và lưu vào: $file');
-  //     await open_file.OpenFile.open(file.path);
-  //   } catch (e) {
-  //     print('Lỗi khi tải file: $e');
-  //   }
-  // }
-
   Future<void> downloadFile(String url, String fileName) async {
     Dio dio = Dio();
     try {
-      // Lấy thư mục download trên bộ nhớ ngoại vi
-      // Directory? externalDir = await get();
-      Directory externalDir = Directory('/storage/emulated/0/Download');
-      developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi. $externalDir');
-      if (externalDir == null) {
-        developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi.');
-        return;
-      }
-
-      String downloadPath = '${externalDir.path}';
+      Directory appDocDir = await getApplicationSupportDirectory();
+      String downloadPath = appDocDir.path + "/Download";
       await Directory(downloadPath).create(recursive: true);
-
-      // Tạo đường dẫn đầy đủ cho file PDF
       String filePath = '$downloadPath/$fileName';
-
-      // Tải file từ URL
       await dio.download(url, filePath);
-
-      // Kiểm tra xem file có tồn tại không trước khi mở
       File file = File(filePath);
-      if (await file.exists()) {
-        developer.log('File đã được tải và lưu vào: $file');
-        await OpenFile.open(file.path);
-      } else {
-        developer.log('Lỗi: File không tồn tại');
-      }
+      developer.log('File đã được tải và lưu vào: $file');
     } catch (e) {
       print('Lỗi khi tải file: $e');
     }
