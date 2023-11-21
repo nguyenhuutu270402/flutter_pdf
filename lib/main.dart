@@ -8,6 +8,7 @@ import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:huutu_app/home_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:open_file/open_file.dart';
 import 'dart:developer' as developer;
@@ -55,6 +56,9 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> openPdf() async {
     await OpenFile.open(remotePDFpath);
+    await Printing.layoutPdf(
+      onLayout: (format) => File(remotePDFpath).readAsBytesSync(),
+    );
   }
 
   void sendMail() async {
@@ -146,7 +150,7 @@ class _MyAppState extends State<MyApp> {
                   },
                 ),
                 TextButton(
-                  child: Text("open print"),
+                  child: Text("Print"),
                   onPressed: () {
                     if (remotePDFpath.isNotEmpty) {
                       openPdf();
