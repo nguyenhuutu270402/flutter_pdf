@@ -42,6 +42,7 @@ dependencies:
   open_file: ^3.3.2
   dio: ^5.3.3
   permission_handler: ^11.0.1
+  flutter_email_sender: ^6.0.2
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:huutu_app/home_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -56,25 +57,15 @@ class _MyAppState extends State<MyApp> {
     await OpenFile.open(remotePDFpath);
   }
 
-  void sendMail() {
-    String? encodeQueryParameters(Map<String, String> params) {
-      return params.entries
-          .map((MapEntry<String, String> e) =>
-              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
-          .join('&');
-    }
-
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'smith@example.com',
-      query: encodeQueryParameters(<String, String>{
-        'subject': 'Example Subject & Symbols are allowed!',
-        'body': 'Hello, this is the body of the email.',
-        'attachment': '$remotePDFpath',
-      }),
+  void sendMail() async {
+    final Email email = Email(
+      body: 'Email body',
+      subject: 'Email subject',
+      recipients: ['turulles5@gmail.com'],
+      attachmentPaths: ['$remotePDFpath'],
+      isHTML: true,
     );
-
-    launchUrl(emailLaunchUri);
+    await FlutterEmailSender.send(email);
   }
 
   // Future<void> downloadFile(String url, String fileName) async {
@@ -102,7 +93,7 @@ class _MyAppState extends State<MyApp> {
       // Lấy thư mục download trên bộ nhớ ngoại vi
       // Directory? externalDir = await get();
       Directory externalDir = Directory('/storage/emulated/0/Download');
-        developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi. $externalDir');
+      developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi. $externalDir');
       if (externalDir == null) {
         developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi.');
         return;
