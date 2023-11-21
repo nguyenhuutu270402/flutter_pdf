@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:huutu_app/home_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
+import 'dart:developer' as developer;
 
 void main() => runApp(MyApp());
 
@@ -17,7 +20,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String remotePDFpath = "";
-
   @override
   void initState() {
     super.initState();
@@ -28,33 +30,19 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _launchPrint() async {
-    final Uri uri = Uri.file(remotePDFpath);
-
-    if (!File(uri.toFilePath()).existsSync()) {
-      throw Exception('$uri does not exist!');
-    }
-    if (!await launchUrl(uri)) {
-      throw Exception('Could not launch $uri');
-    }
-  }
-
   Future<File> createFileOfPdfUrl() async {
     Completer<File> completer = Completer();
     print("Start download file from internet!");
     try {
-      // final url = "https://berlin2017.droidcon.cod.newthinking.net/sites/global.droidcon.cod.newthinking.net/files/media/documents/Flutter%20-%2060FPS%20UI%20of%20the%20future%20%20-%20DroidconDE%2017.pdf";
-      // final url = "https://pdfkit.org/docs/guide.pdf";
-      const url = "http://www.pdf995.com/samples/pdf.pdf";
+      const url = "https://pdfkit.org/docs/guide.pdf";
+      downloadFile(url, "mypdf.pdf");
       final filename = url.substring(url.lastIndexOf("/") + 1);
       var request = await HttpClient().getUrl(Uri.parse(url));
       var response = await request.close();
       var bytes = await consolidateHttpClientResponseBytes(response);
-      var dir = await getApplicationDocumentsDirectory();
-      print("Download files");
-      print("${dir.path}/$filename");
-      File file = File("${dir.path}/$filename");
-
+      var dir = await getExternalStorageDirectory();
+      File file = File("${dir!.path}/$filename");
+      print("Download files>>>>>>>>>>>>>>>>> ${file.path}");
       await file.writeAsBytes(bytes, flush: true);
       completer.complete(file);
     } catch (e) {
@@ -62,6 +50,84 @@ class _MyAppState extends State<MyApp> {
     }
 
     return completer.future;
+  }
+
+  Future<void> openPdf() async {
+    await OpenFile.open(remotePDFpath);
+  }
+
+  void sendMail() {
+    String? encodeQueryParameters(Map<String, String> params) {
+      return params.entries
+          .map((MapEntry<String, String> e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+          .join('&');
+    }
+
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: 'smith@example.com',
+      query: encodeQueryParameters(<String, String>{
+        'subject': 'Example Subject & Symbols are allowed!',
+        'body': 'Hello, this is the body of the email.',
+        'attachment': '$remotePDFpath',
+      }),
+    );
+
+    launchUrl(emailLaunchUri);
+  }
+
+  // Future<void> downloadFile(String url, String fileName) async {
+  //   Dio dio = Dio();
+  //   try {
+  //     // Tạo thư mục download nếu chưa tồn tại
+  //     Directory appDocDir = await getApplicationSupportDirectory();
+  //     String downloadPath = appDocDir.path + "/Download";
+  //     await Directory(downloadPath).create(recursive: true);
+  //     // Tạo đường dẫn đầy đủ cho file PDF
+  //     String filePath = '$downloadPath/$fileName';
+  //     // Tải file từ URL
+  //     await dio.download(url, filePath);
+  //     File file = File(filePath);
+  //     developer.log('File đã được tải và lưu vào: $file');
+  //     await open_file.OpenFile.open(file.path);
+  //   } catch (e) {
+  //     print('Lỗi khi tải file: $e');
+  //   }
+  // }
+
+  Future<void> downloadFile(String url, String fileName) async {
+    Dio dio = Dio();
+    try {
+      // Lấy thư mục download trên bộ nhớ ngoại vi
+      // Directory? externalDir = await get();
+      Directory externalDir = Directory('/storage/emulated/0/Download');
+        developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi. $externalDir');
+      if (externalDir == null) {
+        developer.log('Lỗi: Không thể lấy thư mục bộ nhớ ngoại vi.');
+        return;
+      }
+
+      String downloadPath = '${externalDir.path}';
+      await Directory(downloadPath).create(recursive: true);
+
+      // Tạo đường dẫn đầy đủ cho file PDF
+      String filePath = '$downloadPath/$fileName';
+
+      // Tải file từ URL
+      await dio.download(url, filePath);
+
+      // Kiểm tra xem file có tồn tại không trước khi mở
+      File file = File(filePath);
+      if (await file.exists()) {
+        developer.log('File đã được tải và lưu vào: $file');
+        await OpenFile.open(file.path);
+      } else {
+        developer.log('Lỗi: File không tồn tại');
+      }
+    } catch (e) {
+      print('Lỗi khi tải file: $e');
+    }
   }
 
   @override
@@ -92,10 +158,31 @@ class _MyAppState extends State<MyApp> {
                   child: Text("open print"),
                   onPressed: () {
                     if (remotePDFpath.isNotEmpty) {
-                      _launchPrint();
+                      openPdf();
                     }
                   },
                 ),
+                TextButton(
+                  child: Text("Home"),
+                  onPressed: () {
+                    if (remotePDFpath.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyHomePage(
+                            title: 'Home',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                TextButton(
+                  child: Text("Mail"),
+                  onPressed: () {
+                    sendMail();
+                  },
+                )
               ],
             );
           },
